@@ -3,3 +3,4 @@ config.py
 venv/
 .txt
 __pycache__/
+node_modules
