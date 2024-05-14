@@ -10,96 +10,82 @@ login_manager = LoginManager()
 ma = Marshmallow()
 db = SQLAlchemy()
 
+fav_dog = db.Table('fav_dog',
+                   db.Column('user_id', db.Integer, db.ForeignKey(
+                       'user.id'), primary_key=True),
+                   db.Column('dog_id', db.String(50), db.ForeignKey(
+                       'dog.api_id'), primary_key=True)
+                   )
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    f_name = db.Column(db.String(50), nullable=False, unique=True)
-    username = db.Column(db.String(50), nullable=False, unique=True)
-    email = db.Column(db.String(100), nullable=False, unique=True)
-    password = db.Column(db.String, nullable=False)
-    zip_code = db.Column(db.String(10), nullable=False)
-    user_created = db.Column(db.DateTime,       nullable=False,
-                             default=lambda: datetime.now(timezone.utc))
-    
+    f_name = db.Column(db.String(50), default='', nullable=False, unique=True)
+    username = db.Column(db.String(50), default='',
+                         nullable=False, unique=True)
+    email = db.Column(db.String(100), default='', nullable=False, unique=True)
+    password = db.Column(db.String, default='', nullable=False)
+    zip_code = db.Column(db.String(10), default='', nullable=False)
+    user_created = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     token = db.Column(db.String, default='', unique=True)
-    token_expiry = db.Column(db.DateTime, nullable=False,
-                             default=lambda: datetime.now(timezone.utc))
-    breed_1 = db.Column(db.String(100), nullable=False)
-    breed_1_img = db.Column(db.String(200), nullable=False)
-    breed_2 = db.Column(db.String(100), nullable=False)
-    breed_2_img = db.Column(db.String(200), nullable=False)
-    breed_3 = db.Column(db.String(100), nullable=False)
-    breed_3_img = db.Column(db.String(200), nullable=False)
-    breed_4 = db.Column(db.String(100), nullable=False)
-    breed_4_img = db.Column(db.String(200), nullable=False)
-    breed_5 = db.Column(db.String(100), nullable=False)
-    breed_5_img = db.Column(db.String(200), nullable=False)
-    breed_6 = db.Column(db.String(100), nullable=False)
-    breed_6_img = db.Column(db.String(200), nullable=False)
-    breed_7 = db.Column(db.String(100), nullable=False)
-    breed_7_img = db.Column(db.String(200), nullable=False)
-    breed_8 = db.Column(db.String(100), nullable=False)
-    breed_8_img = db.Column(db.String(200), nullable=False)
-    breed_9 = db.Column(db.String(100), nullable=False)
-    breed_9_img = db.Column(db.String(200), nullable=False)
-    breed_10 = db.Column(db.String(100), nullable=False)
-    breed_10_img = db.Column(db.String(200), nullable=False)
-    dogs = db.relationship('Dog', backref='user', lazy=True)
-    
+    token_expiry = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+    dogs = db.relationship('Dog', secondary=fav_dog,
+                           backref='users', lazy=True)
 
-    def __init__(self, f_name, username, email, password, zip_code):
-        self.f_name = f_name
-        self.username = username
-        self.email = email
-        self.password = generate_password_hash(password)
-        self.zip_code = zip_code
-        self.token = token_hex(16)
-
-    class UserSchema(ma.Schema):
+class UserSchema(ma.Schema):
         class Meta:
-            fields = ('id', 'f_name', 'username', 'email', 'password', 'zip_code', 'user_created', 'token', 'token_expiry', 'breed_1', 'breed_1_img', 'breed_2', 'breed_2_img', 'breed_3', 'breed_3_img', 'breed_4', 'breed_4_img', 'breed_5', 'breed_5_img', 'breed_6', 'breed_6_img', 'breed_7', 'breed_7_img', 'breed_8', 'breed_8_img', 'breed_9', 'breed_9_img', 'breed_10', 'breed_10_img')
+            fields = ('id', 'f_name', 'username', 'email', 'password',
+                    'zip_code', 'user_created', 'token', 'token_expiry')
 
-    user_schema = UserSchema()
-    users_schema = UserSchema(many=True)
 
 class Dog(db.Model, UserMixin):
     __tablename__ = 'dog'
-    id = db.Column(db.Integer, primary_key=True)
-    api_id = db.Column(db.String(50), nullable=False)
-    org_id = db.Column(db.String(50), nullable=False)
-    status = db.Column(db.String(100), nullable=False)
-    name = db.Column(db.String, nullable=False)
-    dog_url = db.Column(db.String(200), nullable=False)
-    age = db.Column(db.String(50), nullable=False)
-    breed = db.Column(db.String(100), nullable=False)
-    color = db.Column(db.String(100), nullable=False)
-    sex = db.Column(db.String(10), nullable=False)
-    city_state = db.Column(db.String(100), nullable=False)
-    dog_zip_code = db.Column(db.String(10), nullable=False)
+    api_id = db.Column(db.String(50), primary_key=True)
+    org_id = db.Column(db.String(50), db.ForeignKey(
+        'org.api_id'), default="", nullable=True) 
+    status = db.Column(db.String(100), default='', nullable=True)
+    name = db.Column(db.String, default='', nullable=True)
+    dog_url = db.Column(db.String(200), default='', nullable=True)
+    age = db.Column(db.String(50), default='', nullable=True)
+    breed = db.Column(db.String(100), default='', nullable=True)
+    color = db.Column(db.String(100), default='', nullable=True)
+    sex = db.Column(db.String(10), default='', nullable=True)
+    city_state = db.Column(db.String(100), default='', nullable=True)
+    dog_zip_code = db.Column(db.String(10), default='', nullable=True)
 
-    def __init__(self, api_dog_id, api_org_id, status, name, dog_url, age, breed, color, city_state, dog_zip_code):
-        self.api_id = api_dog_id
-        self.org_id = api_org_id
-        self.status = status
-        self.name = name
-        self.dog_url = dog_url
-        self.age = age
-        self.breed = breed
-        self.color = color
-        self.city_state = city_state
-        self.dog_zip_code = dog_zip_code
 
-    class DogSchema(ma.Schema):
-        class Meta:
-            fields = ('id', 'api_dog_id', 'api_org_id', 'status', 'name', 'dog_url',
-                      'age', 'breed', 'color', 'sex', 'city_state', 'dog_zip_code')
+class DogSchema(ma.Schema):
+    class Meta:
+        fields = ('api_id', 'org_id', 'status', 'name', 'dog_url',
+                  'age', 'breed', 'color', 'sex', 'city_state', 'dog_zip_code')
 
-    dog_schema = DogSchema()
-    dogs_schema = DogSchema(many=True)
 
-# class Org(db.Model, UserMixin):
-#     __tablename__ = 'org'
-#     id = db.Column(db.Integer, primary_key=True)
-#     dog_id = db.Column(db.String(50), nullable=False)
-#     api_org_id = db.Column(db.String(50), nullable=False)
+class Org(db.Model, UserMixin):
+    __tablename__ = 'org'
+    api_id = db.Column(db.String(50), primary_key=True)
+    name = db.Column(db.String(100), default='', nullable=True)
+    city = db.Column(db.String(100), default='', nullable=True)
+    state = db.Column(db.String(10), default='', nullable=True)
+    email = db.Column(db.String(100), default='', nullable=True)
+    adoption_url = db.Column(db.String(200), default='', nullable=True)
+    website_url = db.Column(db.String(200), default='', nullable=True)
+    fb_url = db.Column(db.String(200), default='', nullable=True)
+    org_zip_code = db.Column(db.String(10), default='', nullable=True)
+
+# Marshmallow schemas for serialization
+
+class OrgSchema(ma.Schema):
+    class Meta:
+        fields = ('api_id', 'name', 'city', 'state', 'email',
+                  'adoption_url', 'website_url', 'fb_url', 'org_zip_code')
+
+
+
+
+
+
+
+

@@ -1,8 +1,7 @@
 from functools import wraps
-# import secrets
 from flask import request, jsonify, json
 import decimal
-from .app.models import User, Dog, db
+from app.models import User, Dog, Org, db
 
 
 def token_required(our_flask_function):
@@ -22,6 +21,8 @@ def token_required(our_flask_function):
 
         return our_flask_function(current_user_token, *args, **kwargs)
     return decorated
+
+
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, decimal.Decimal):
