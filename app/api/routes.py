@@ -7,6 +7,6 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 api = Blueprint('api', __name__, url_prefix='/api')
 
 
-@api.route('/getdata')
+@api.route('/')
 def getdata():
     return {'yee': 'naw'}

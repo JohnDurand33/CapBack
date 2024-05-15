@@ -6,6 +6,7 @@ from flask_moment import Moment
 from flask_cors import CORS
 from .models import db, ma, login_manager, User
 from .api import api
+from .auth import auth
 from helpers import JSONEncoder
 
 
@@ -18,11 +19,13 @@ CORS(app, resources={r"/api/*": {
 }})
 
 app.register_blueprint(api, url_prefix='/api')
+app.register_blueprint(auth, url_prefix='/auth')
 
 app.json_encoder = JSONEncoder
 app.config.from_object(Config)
-db.init_app(app)
 
+
+db.init_app(app)
 migrate = Migrate(app, db, compare_type=True)
 login_manager.init_app(app)
 ma.init_app(app)
