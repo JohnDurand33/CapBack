@@ -4,9 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta, timezone
 from flask_marshmallow import Marshmallow
 from flask_login import UserMixin
-from flask_login import LoginManager
 
-login_manager = LoginManager()
 ma = Marshmallow()
 db = SQLAlchemy()
 
@@ -21,10 +19,9 @@ fav_dog = db.Table('fav_dog',
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    f_name = db.Column(db.String(50), default='', nullable=False, unique=True)
-    username = db.Column(db.String(50), default='',
-                         nullable=False, unique=True)
-    email = db.Column(db.String(100), default='', nullable=False, unique=True)
+    f_name = db.Column(db.String(50), default='', nullable=False)
+    l_name = db.Column(db.String(50), default='', nullable=False)
+    email = db.Column(db.String(100), default='', nullable=False)
     password = db.Column(db.String, default='', nullable=False)
     zip_code = db.Column(db.String(10), default='', nullable=False)
     user_created = db.Column(
@@ -37,7 +34,7 @@ class User(db.Model, UserMixin):
 
 class UserSchema(ma.Schema):
         class Meta:
-            fields = ('id', 'f_name', 'username', 'email', 'password',
+            fields = ('id', 'f_name', 'l_name', 'email', 'password',
                     'zip_code', 'user_created', 'token', 'token_expiry')
 
 
