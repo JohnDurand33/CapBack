@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify
-from ..models import db, User, UserSchema
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash
-import jwt
+from flask_jwt_extended import create_access_token
+from app.models import db, User
 import datetime
+import jwt
+from ...helpers import token_required, JSONEncoder, basic_auth_required
 from ..auth import auth
 
 
@@ -13,21 +15,21 @@ def signup():
     email = data.get('email')
     password = data.get('password')
 
-    # Validate input data (add your validation logic here)
+    if not username or not email or not password:
+        return jsonify({'message': 'Missing required fields'}), 400
 
-    # Hash the password
+    if User.query.filter_by(email=email).first():
+        return jsonify({'message': 'Email already in use'}), 400
+
     password_hash = generate_password_hash(password)
 
-    # Create new user and add to database
-    new_user = User(username=username, email=email,
-                    password_hash=password_hash)
+    new_user = User(username=username, email=email, password=password_hash)
     db.session.add(new_user)
     db.session.commit()
 
-    # Generate token
     token = jwt.encode({
         'public_id': new_user.id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-    }, app.config['SECRET_KEY'], algorithm="HS256")
+        'exp': datetime.datetime.now() + datetime.timedelta(hours=24)
+    }, current_app.config['SECRET_KEY'], algorithm="HS256")
 
     return jsonify({'token': token}), 201

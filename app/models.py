@@ -1,7 +1,7 @@
 from secrets import token_hex
 from werkzeug.security import generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from flask_marshmallow import Marshmallow
 from flask_login import UserMixin
 from flask_login import LoginManager

@@ -1,6 +1,7 @@
 from flask import Flask
 from config import Config
 from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager
 from flask_login import LoginManager
 from flask_moment import Moment
 from flask_cors import CORS
@@ -27,9 +28,10 @@ app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app, db, compare_type=True)
-login_manager.init_app(app)
+login_manager=LoginManager(app)
 ma.init_app(app)
 moment = Moment(app)
+jwt = JWTManager(app)
 
 
 #If issues logging in this may be the cause.  This is the function that will load the user from the database.  It will be called when the user logs in and is authenticated.
