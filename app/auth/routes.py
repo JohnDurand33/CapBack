@@ -6,17 +6,18 @@ from flask_jwt_extended import (
 )
 from app.models import db, User
 from datetime import datetime, timedelta
-from ...app import auth, jwt
+from .__init import auth
 
 
 @auth.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
-    username = data.get('username')
+
     email = data.get('email')
     password = data.get('password')
+    zip_code = data.get('zipCode')
 
-    if not username or not email or not password:
+    if not email or not password or not zip_code:
         return jsonify({'message': 'Missing required fields'}), 400
 
     if User.query.filter_by(email=email).first():
@@ -24,7 +25,7 @@ def signup():
 
     password_hash = generate_password_hash(password)
 
-    new_user = User(username=username, email=email, password=password_hash)
+    new_user = User(email=email, password=password_hash, zip_code=zip_code)
     db.session.add(new_user)
     db.session.commit()
 
@@ -51,12 +52,11 @@ def login():
     if not user or not check_password_hash(user.password, password):
         return jsonify({'message': 'Invalid email or password'}), 401
 
-    # Generate access and refresh tokens
     access_token = create_access_token(identity=email)
     refresh_token = create_refresh_token(identity=email)
 
     user.token = refresh_token
-    user.token_expiry = datetime.datetime.utcnow() + timedelta(days=30)
+    user.token_expiry = datetime.now() + timedelta(days=30)
     db.session.commit()
 
     return jsonify({'access_token': access_token, 'refresh_token': refresh_token}), 200

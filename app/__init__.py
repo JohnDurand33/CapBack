@@ -11,7 +11,7 @@ from helpers import JSONEncoder
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/api/*": {
+CORS(app, resources={r"/auth/*": {
     "origins": "*",
     "allow_headers": ["Content-Type", "Authorization"],
     "methods": ["OPTIONS", "POST", "GET", "DELETE", "PUT"]

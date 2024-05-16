@@ -19,8 +19,6 @@ fav_dog = db.Table('fav_dog',
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    f_name = db.Column(db.String(50), default='', nullable=False)
-    l_name = db.Column(db.String(50), default='', nullable=False)
     email = db.Column(db.String(100), default='', nullable=False)
     password = db.Column(db.String, default='', nullable=False)
     zip_code = db.Column(db.String(10), default='', nullable=False)
@@ -34,7 +32,7 @@ class User(db.Model, UserMixin):
 
 class UserSchema(ma.Schema):
         class Meta:
-            fields = ('id', 'f_name', 'l_name', 'email', 'password',
+            fields = ('id', 'email', 'password',
                     'zip_code', 'user_created', 'token', 'token_expiry')
 
 
