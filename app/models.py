@@ -19,21 +19,26 @@ fav_dog = db.Table('fav_dog',
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), default='', nullable=False)
-    password = db.Column(db.String, default='', nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(100), nullable=False)
     zip_code = db.Column(db.String(10), default='', nullable=False)
     user_created = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     token = db.Column(db.String, default='', unique=True)
     token_expiry = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
+    breed_1 = db.Column(db.String(100), default='', nullable=True)
+    breed_1_img_url = db.Column(db.String(200), default='', nullable=True)
+    breed_2 = db.Column(db.String(100), default='', nullable=True)
+    breed_2_img_url = db.Column(db.String(200), default='', nullable=True)
+    breed_3 = db.Column(db.String(100), default='', nullable=True)
+    breed_3_img_url = db.Column(db.String(200), default='', nullable=True)
+    breed_4 = db.Column(db.String(100), default='', nullable=True)
+    breed_4_img_url = db.Column(db.String(200), default='', nullable=True)
+    breed_5 = db.Column(db.String(100), default='', nullable=True)
+    breed_5_img_url = db.Column(db.String(200), default='', nullable=True)
     dogs = db.relationship('Dog', secondary=fav_dog,
                            backref='users', lazy=True)
-
-class UserSchema(ma.Schema):
-        class Meta:
-            fields = ('id', 'email', 'password',
-                    'zip_code', 'user_created', 'token', 'token_expiry')
 
 
 class Dog(db.Model, UserMixin):
@@ -52,11 +57,6 @@ class Dog(db.Model, UserMixin):
     dog_zip_code = db.Column(db.String(10), default='', nullable=True)
 
 
-class DogSchema(ma.Schema):
-    class Meta:
-        fields = ('api_id', 'org_id', 'status', 'name', 'dog_url',
-                  'age', 'breed', 'color', 'sex', 'city_state', 'dog_zip_code')
-
 
 class Org(db.Model, UserMixin):
     __tablename__ = 'org'
@@ -71,11 +71,6 @@ class Org(db.Model, UserMixin):
     org_zip_code = db.Column(db.String(10), default='', nullable=True)
 
 # Marshmallow schemas for serialization
-
-class OrgSchema(ma.Schema):
-    class Meta:
-        fields = ('api_id', 'name', 'city', 'state', 'email',
-                  'adoption_url', 'website_url', 'fb_url', 'org_zip_code')
 
 
 

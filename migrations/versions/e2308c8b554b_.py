@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 946aca45aa3e
+Revision ID: e2308c8b554b
 Revises: 
-Create Date: 2024-05-14 16:20:54.134879
+Create Date: 2024-05-16 17:52:40.673332
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '946aca45aa3e'
+revision = 'e2308c8b554b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -32,8 +32,6 @@ def upgrade():
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('f_name', sa.String(length=50), nullable=False),
-    sa.Column('username', sa.String(length=50), nullable=False),
     sa.Column('email', sa.String(length=100), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('zip_code', sa.String(length=10), nullable=False),
@@ -41,10 +39,7 @@ def upgrade():
     sa.Column('token', sa.String(), nullable=True),
     sa.Column('token_expiry', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('f_name'),
-    sa.UniqueConstraint('token'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('token')
     )
     op.create_table('dog',
     sa.Column('api_id', sa.String(length=50), nullable=False),

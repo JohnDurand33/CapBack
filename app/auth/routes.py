@@ -32,7 +32,7 @@ def signup():
     access_token = create_access_token(identity=email)
     refresh_token = create_refresh_token(identity=email)
 
-    new_user.token = refresh_token
+    new_user.refresh_token = refresh_token
     new_user.token_expiry = datetime.now() + timedelta(days=30)
     db.session.commit()
 
