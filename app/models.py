@@ -8,6 +8,7 @@ from flask_login import UserMixin
 ma = Marshmallow()
 db = SQLAlchemy()
 
+# Many-to-Many relationship table for User and Dog
 fav_dog = db.Table('fav_dog',
                    db.Column('user_id', db.Integer, db.ForeignKey(
                        'user.id'), primary_key=True),
@@ -40,12 +41,42 @@ class User(db.Model, UserMixin):
     dogs = db.relationship('Dog', secondary=fav_dog,
                            backref='users', lazy=True)
 
+    # Adding to_dict method
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'zip_code': self.zip_code,
+            'user_created': self.user_created.isoformat() if self.user_created else None,
+            'token': self.token,
+            'token_expiry': self.token_expiry.isoformat() if self.token_expiry else None,
+            'breeds': {
+                'breed_1': {'name': self.breed_1, 'img_url': self.breed_1_img_url},
+                'breed_2': {'name': self.breed_2, 'img_url': self.breed_2_img_url},
+                'breed_3': {'name': self.breed_3, 'img_url': self.breed_3_img_url},
+                'breed_4': {'name': self.breed_4, 'img_url': self.breed_4_img_url},
+                'breed_5': {'name': self.breed_5, 'img_url': self.breed_5_img_url},
+            }
+        }
+
+    # Adding from_dict method
+    def from_dict(self, data):
+        for field in ['email', 'zip_code', 'password', 'token', 'token_expiry']:
+            if field in data:
+                setattr(self, field, data[field])
+        breeds = data.get('breeds', {})
+        for i in range(1, 6):
+            breed_name = breeds.get(f'breed_{i}', {}).get('name', '')
+            breed_img_url = breeds.get(f'breed_{i}', {}).get('img_url', '')
+            setattr(self, f'breed_{i}', breed_name)
+            setattr(self, f'breed_{i}_img_url', breed_img_url)
+
 
 class Dog(db.Model, UserMixin):
     __tablename__ = 'dog'
     api_id = db.Column(db.String(50), primary_key=True)
     org_id = db.Column(db.String(50), db.ForeignKey(
-        'org.api_id'), default="", nullable=True) 
+        'org.api_id'), default="", nullable=True)
     status = db.Column(db.String(100), default='', nullable=True)
     name = db.Column(db.String, default='', nullable=True)
     dog_url = db.Column(db.String(200), default='', nullable=True)
@@ -55,7 +86,6 @@ class Dog(db.Model, UserMixin):
     sex = db.Column(db.String(10), default='', nullable=True)
     city_state = db.Column(db.String(100), default='', nullable=True)
     dog_zip_code = db.Column(db.String(10), default='', nullable=True)
-
 
 
 class Org(db.Model, UserMixin):
@@ -69,11 +99,6 @@ class Org(db.Model, UserMixin):
     website_url = db.Column(db.String(200), default='', nullable=True)
     fb_url = db.Column(db.String(200), default='', nullable=True)
     org_zip_code = db.Column(db.String(10), default='', nullable=True)
-
-# Marshmallow schemas for serialization
-
-
-
 
 
 
