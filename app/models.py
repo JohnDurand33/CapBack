@@ -3,7 +3,9 @@ from werkzeug.security import generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta, timezone
 from flask_marshmallow import Marshmallow
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from flask_login import UserMixin
+from sqlalchemy import event
 
 ma = Marshmallow()
 db = SQLAlchemy()
@@ -21,11 +23,11 @@ class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
     zip_code = db.Column(db.String(10), default='', nullable=False)
     user_created = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    token = db.Column(db.String, default='', unique=True)
+    token = db.Column(db.String(256), default='', nullable=True)
     token_expiry = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=True)
     breed_1 = db.Column(db.String(100), default='', nullable=True)
@@ -63,7 +65,12 @@ class User(db.Model, UserMixin):
     def from_dict(self, data):
         for field in ['email', 'zip_code', 'password', 'token', 'token_expiry']:
             if field in data:
-                setattr(self, field, data[field])
+                value = data[field]
+                if field in ['user_created', 'token_expiry'] and value and isinstance(value, str):
+                    value = datetime.fromisoformat(value) 
+                    if value.tzinfo is None:
+                        value = value.replace(tzinfo=timezone.utc)
+                setattr(self, field, value)
         breeds = data.get('breeds', {})
         for i in range(1, 6):
             breed_name = breeds.get(f'breed_{i}', {}).get('name', '')
@@ -71,6 +78,15 @@ class User(db.Model, UserMixin):
             setattr(self, f'breed_{i}', breed_name)
             setattr(self, f'breed_{i}_img_url', breed_img_url)
 
+#Makes the token check method much easier
+def ensure_timezone_aware(mapper, connection, target):
+    if target.user_created is not None and target.user_created.tzinfo is None:
+        target.user_created = target.user_created.replace(tzinfo=timezone.utc)
+    if target.token_expiry is not None and target.token_expiry.tzinfo is None:
+        target.token_expiry = target.token_expiry.replace(tzinfo=timezone.utc)
+
+event.listen(User, 'before_insert', ensure_timezone_aware)
+event.listen(User, 'before_update', ensure_timezone_aware)
 
 class Dog(db.Model, UserMixin):
     __tablename__ = 'dog'
@@ -101,6 +117,28 @@ class Org(db.Model, UserMixin):
     org_zip_code = db.Column(db.String(10), default='', nullable=True)
 
 
+class DogSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Dog
+        load_instance = True
 
 
+class OrgSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Org
+        load_instance = True
 
+class UserSchema(ma.SQLAlchemyAutoSchema):
+    dogs = ma.Nested(DogSchema, many=True)  
+
+    class Meta:
+        model = User
+        load_instance = True
+
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+dog_schema = DogSchema()
+dogs_schema = DogSchema(many=True)
+org_schema = OrgSchema()
+orgs_schema = OrgSchema(many=True)

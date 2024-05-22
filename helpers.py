@@ -1,27 +1,28 @@
 from functools import wraps
 from flask import request, jsonify, json
 import decimal
-from app.models import User, Dog, Org, db
+from app.models import User
+from datetime import datetime, timezone
 
 
-def token_required(our_flask_function):
-    @wraps(our_flask_function)
+def token_required(f):
+    @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
+        token_header = request.headers.get('Authorization')
+        token = token_header.split(' ')[1] if token_header else None
 
-        if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(' ')[1]
         if not token:
-            return jsonify({'message': 'Token is missing.'}), 401
+            return jsonify({'message': 'Token is missing!'}), 401
 
-        current_user_token = User.query.filter_by(token=token).first()
+        user = User.query.filter_by(token=token).first()
+        if user is None:
+            return jsonify({'message': 'User not found'}), 401
 
-        if not current_user_token:
-            return jsonify({'message': 'Token is invalid'})
+        if user.token_expiry is None or user.token_expiry < datetime.now(timezone.utc):
+            return jsonify({'message': 'Token is invalid or expired!'}), 401
 
-        return our_flask_function(current_user_token, *args, **kwargs)
+        return f(user, *args, **kwargs)
     return decorated
-
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):

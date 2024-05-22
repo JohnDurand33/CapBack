@@ -1,7 +1,6 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify
 from helpers import token_required
-from app.models import User, db
-from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
+from app.models import db, fav_dog, Org, Dog, User, user_schema, users_schema, dog_schema, dogs_schema, org_schema, orgs_schema
 from . import api
 
 
