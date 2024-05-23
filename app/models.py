@@ -88,11 +88,12 @@ def ensure_timezone_aware(mapper, connection, target):
 event.listen(User, 'before_insert', ensure_timezone_aware)
 event.listen(User, 'before_update', ensure_timezone_aware)
 
+
 class Dog(db.Model, UserMixin):
     __tablename__ = 'dog'
     api_id = db.Column(db.String(50), primary_key=True)
     org_id = db.Column(db.String(50), db.ForeignKey(
-        'org.api_id'), default="", nullable=True)
+        'org.api_id'), nullable=False)
     status = db.Column(db.String(100), default='', nullable=True)
     name = db.Column(db.String, default='', nullable=True)
     dog_url = db.Column(db.String(200), default='', nullable=True)
