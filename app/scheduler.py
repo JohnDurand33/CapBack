@@ -5,6 +5,7 @@ import time
 from flask import current_app as app
 from app.models import Dog, Org, db, dog_schema, dogs_schema, org_schema, orgs_schema
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 import logging
 
 # Configure logging
@@ -109,12 +110,20 @@ class DogDataFetcher:
                 dog_schema.dump(dog)
 
         if new_orgs:
-            db.session.add_all(new_orgs.values())
-            db.session.commit()
+            if len(new_orgs) == 1:
+                org_schema.dump(new_orgs[0])  # Serialize the single new dog
+        else:
+            orgs_schema.dump(new_dogs)  # Serialize the list of new dogs
+            db.session.add_all(new_orgs)
+        db.session.commit()
 
         if new_dogs:
+            if len(new_dogs) == 1:
+                dog_schema.dump(new_dogs[0])  # Serialize the single new dog
+        else:
+            dogs_schema.dump(new_dogs)  # Serialize the list of new dogs
             db.session.add_all(new_dogs)
-            db.session.commit()
+        db.session.commit()
 
     def delete_unavailable_dogs(self, db_dogs, fetched_ids):
         current_ids = set(db_dogs.keys())
@@ -183,7 +192,9 @@ class DogDataFetcher:
 
 def start_scheduler(app):
     fetcher = DogDataFetcher(app)
-    scheduler.add_job(fetcher.fetch_and_save_dogs,'interval', minutes=1, max_instances=1)
+    # Run every other day at 1 AM
+    trigger = CronTrigger(hour=1, minute=0, day="*/2")
+    scheduler.add_job(fetcher.fetch_and_save_dogs,trigger=trigger, max_instances=1)
     scheduler.start()
     print("Scheduler started")
     logger.info("Scheduler started")
