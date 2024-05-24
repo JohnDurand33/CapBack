@@ -64,6 +64,6 @@ def logout(user):
 @auth.route('/protected', methods=['GET'])
 @token_required
 def protected(user):
-    return jsonify({'message': f'Hello, {user.email}! This is a protected route.'}), 200
+    return jsonify({'message': 'You are logged in'}), 200
 
 
