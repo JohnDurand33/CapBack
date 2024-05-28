@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from helpers import token_required
 from .__init import auth
 import secrets
+from flask_cors import cross_origin
 
 
 @auth.route('/signup', methods=['POST'])
@@ -61,9 +62,32 @@ def logout(user):
 
     return jsonify({'message': 'Logged out successfully'}), 200
 
+
+@auth.route('/getbreeds', methods=['GET'])
+@cross_origin()  # Apply CORS to this route
+@token_required
+def get_fav_breeds(user):
+    try:
+        print(f'Request Method: {request.method}')
+        print(f'User: {user}')
+        print(f'favBreeds: {user.fav_breeds}')
+        return jsonify(user.fav_breeds), 200
+    except Exception as e:
+        print(f'Error: {e}')
+        return jsonify({'message': 'Internal Server Error'}), 500
+
 @auth.route('/protected', methods=['GET'])
 @token_required
 def protected(user):
     return jsonify({'message': 'You are logged in'}), 200
 
+
+@auth.route('/updatebreeds', methods=['POST'])
+@token_required
+def update_fav_breeds(user):
+    data = request.json
+    user.fav_breeds = data['fav_breeds']
+    print(f'user.fav_breeds: {user.fav_breeds}')
+    db.session.commit()
+    return jsonify({'message': 'Favorite breeds updated successfully'}), 200
 

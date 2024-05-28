@@ -18,25 +18,9 @@ def create_app():
 
     app = Flask(__name__)
 
-    db_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
-    print(f'db_uri: {db_uri}')
-    if not db_uri:
-        raise RuntimeError(
-            "SQLALCHEMY_DATABASE_URI environment variable not set")
-    print(f"SQLALCHEMY_DATABASE_URI from environment: {
-          db_uri}")  # Debug print statement
+    app.config.from_object(Config) 
 
-    app.config.from_object(Config)  # Load config from Config class
-
-    # Check if the config has been set correctly
-    sqlalchemy_uri = app.config.get('SQLALCHEMY_DATABASE_URI')
-    print(f'sqlalchemy_uri: {sqlalchemy_uri}')
-    if not sqlalchemy_uri:
-        raise RuntimeError("SQLALCHEMY_DATABASE_URI not set in app.config")
-    print(f"SQLALCHEMY_DATABASE_URI in create_app: {
-          sqlalchemy_uri}")  # Debug print statement
-
-    CORS(app, resources={r"/auth/*": {
+    CORS(app, resources={r"/*": {
         "origins": "*",
         "allow_headers": ["Content-Type", "Authorization"],
         "methods": ["OPTIONS", "POST", "GET", "DELETE", "PUT"]

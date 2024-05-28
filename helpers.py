@@ -8,8 +8,10 @@ from datetime import datetime, timezone
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token_header = request.headers.get('Authorization')
-        token = token_header.split(' ')[1] if token_header else None
+        token = None
+        if 'Authorization' in request.headers:
+            token_header = request.headers['Authorization']
+            token = token_header.split(' ')[1]
 
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
@@ -21,6 +23,7 @@ def token_required(f):
         if user.token_expiry is None or user.token_expiry < datetime.now(timezone.utc):
             return jsonify({'message': 'Token is invalid or expired!'}), 401
 
+        print(f'token authenticated! User: {user}')
         return f(user, *args, **kwargs)
     return decorated
 
