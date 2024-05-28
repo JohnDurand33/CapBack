@@ -6,7 +6,7 @@ from flask_marshmallow import Marshmallow
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from flask_login import UserMixin
 from sqlalchemy import event
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.sql import func
 
 ma = Marshmallow()
@@ -30,7 +30,7 @@ class User(db.Model, UserMixin):
     user_created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     token = db.Column(db.String(256), default='', nullable=True)
     token_expiry = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(hours=1), nullable=True)
-    fav_breeds = db.Column(JSONB, default=lambda: {}, nullable=False)
+    fav_breeds = db.Column(JSON, default=[])
     dogs = db.relationship('Dog', secondary=fav_dog, backref='users', lazy=True)
 
 
