@@ -63,6 +63,12 @@ def logout(user):
     return jsonify({'message': 'Logged out successfully'}), 200
 
 
+@auth.route('/protected', methods=['GET'])
+@token_required
+def protected(user):
+    return jsonify({'message': 'You are logged in'}), 200
+
+
 @auth.route('/getbreeds', methods=['GET'])
 @cross_origin()  # Apply CORS to this route
 @token_required
@@ -75,11 +81,6 @@ def get_fav_breeds(user):
     except Exception as e:
         print(f'Error: {e}')
         return jsonify({'message': 'Internal Server Error'}), 500
-
-@auth.route('/protected', methods=['GET'])
-@token_required
-def protected(user):
-    return jsonify({'message': 'You are logged in'}), 200
 
 
 @auth.route('/updatebreeds', methods=['POST'])

@@ -5,8 +5,11 @@ import time
 from flask import current_app as app
 from app.models import Dog, Org, db, dog_schema, dogs_schema, org_schema, orgs_schema
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.cron import CronTrigger
 import logging
+from datetime import datetime, timedelta
+from sqlalchemy.exc import IntegrityError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,18 +21,11 @@ scheduler = BackgroundScheduler()
 class DogDataFetcher:
     def __init__(self, app):
         self.app = app
-        self.api_key = self.get_api_key()
+        self.api_key = os.getenv('RESCUE_KEY')
         if not self.api_key:
+            print("API key is not set. Please set the RESCUE_KEY environment variable.")
             raise ValueError(
                 "API key is not set. Please set the RESCUE_KEY environment variable.")
-
-    def get_api_key(self):
-        api_key = os.getenv('RESCUE_KEY')
-        if not api_key:
-            logger.error(
-                "API key is not set. Please set the RESCUE_KEY environment variable.")
-            print("API key is not set. Please set the RESCUE_KEY environment variable.")
-        return api_key
 
     def fetch_data_from_api(self, result_start, batch_size):
         payload = {
@@ -60,7 +56,8 @@ class DogDataFetcher:
             'Authorization': self.api_key
         }
 
-        response = requests.post(url=url, headers=headers, data=json.dumps(payload))
+        response = requests.post(
+            url=url, headers=headers, data=json.dumps(payload))
         response.raise_for_status()
         logger.info(f"Fetch complete. Response status code: {response.status_code}")
         print(f"Fetch complete. Response status code: {response.status_code}")
@@ -73,9 +70,10 @@ class DogDataFetcher:
 
         for api_id, animal in data.items():
             fetched_ids.add(api_id)
-            if animal.get('animalID') in db_dogs:
-                dog = db_dogs[animal.get('animalID')]
-                if dog.status != "1":
+
+            if api_id in db_dogs:
+                dog = db_dogs[api_id]
+                if dog.status != "1":  # Status has changed, remove the dog
                     logger.info(f"Deleting dog with id {dog.api_id} as its status changed.")
                     print(f"Deleting dog with id {dog.api_id} as its status changed.")
                     db.session.delete(dog)
@@ -90,7 +88,7 @@ class DogDataFetcher:
                         new_orgs[org_id] = org
                         added_orgs.add(org_id)
                         org_schema.dump(org)
-                
+
                 logger.info(f"Adding new dog with id {animal.get('animalID')}")
                 print(f"Adding new dog with id {animal.get('animalID')}")
                 dog = Dog(
@@ -98,7 +96,7 @@ class DogDataFetcher:
                     org_id=animal.get('animalOrgID'),
                     status=animal.get('animalStatusID'),
                     name=animal.get('animalName'),
-                    dog_url=animal.get('animalThumbnailUrl'),
+                    img_url=animal.get('animalThumbnailUrl'),
                     age=animal.get('animalAgeString'),
                     breed=animal.get('animalBreed'),
                     color=animal.get('animalColor'),
@@ -109,21 +107,18 @@ class DogDataFetcher:
                 new_dogs.append(dog)
                 dog_schema.dump(dog)
 
-        if new_orgs:
-            if len(new_orgs) == 1:
-                org_schema.dump(new_orgs[0])  # Serialize the single new dog
-        else:
-            orgs_schema.dump(new_dogs)  # Serialize the list of new dogs
-            db.session.add_all(new_orgs)
-        db.session.commit()
+        try:
+            if new_orgs:
+                db.session.add_all(new_orgs.values())
 
-        if new_dogs:
-            if len(new_dogs) == 1:
-                dog_schema.dump(new_dogs[0])  # Serialize the single new dog
-        else:
-            dogs_schema.dump(new_dogs)  # Serialize the list of new dogs
-            db.session.add_all(new_dogs)
-        db.session.commit()
+            if new_dogs:
+                db.session.add_all(new_dogs)
+
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            logger.error(f"IntegrityError occurred: {e}")
+            print(f"IntegrityError occurred: {e}")
 
     def delete_unavailable_dogs(self, db_dogs, fetched_ids):
         current_ids = set(db_dogs.keys())
@@ -143,7 +138,6 @@ class DogDataFetcher:
         logger.info("Scheduler stopped")
         print("Scheduler stopped")
 
-
     def fetch_and_save_dogs(self):
         print("Job fetch_and_save_dogs started")
         logger.info("Job fetch_and_save_dogs started")
@@ -155,8 +149,10 @@ class DogDataFetcher:
             logger.info("Querying dog id information from database")
             print("Querying dog id information from database")
             db_dogs = {dog.api_id: dog for dog in Dog.query.all()}
-            logger.info(f"Query to dict -> 'api_id:dog' info -> db_dogs is complete. Initial count of dogs in database: {len(db_dogs)}")
-            print(f"Query to dict -> 'api_id:dog' info -> db_dogs is complete. Initial count of dogs in database: {len(db_dogs)}")
+            logger.info(
+                f"Query to dict -> 'api_id:dog' info -> db_dogs is complete. Initial count of dogs in database: {len(db_dogs)}")
+            print(
+                f"Query to dict -> 'api_id:dog' info -> db_dogs is complete. Initial count of dogs in database: {len(db_dogs)}")
 
             result_start = 0
             batch_size = 1000
@@ -174,8 +170,8 @@ class DogDataFetcher:
                     break
 
                 if not data:
-                    logger.info(f"No more data to fetch.")
-                    print(f"No more data to fetch.")
+                    logger.info("No more data to fetch.")
+                    print("No more data to fetch.")
                     break
 
                 self.process_animal_data(data, db_dogs, fetched_ids)
@@ -188,12 +184,14 @@ class DogDataFetcher:
             self.delete_unavailable_dogs(db_dogs, fetched_ids)
         print("Job fetch_and_save_dogs completed")
         self.stop_scheduler()
-        print("Finised shutting down")
+        print("Finished shutting down")
+
 
 def start_scheduler(app):
     fetcher = DogDataFetcher(app)
-    # Run every other day at 1 AM
-    trigger = CronTrigger(hour=1, minute=0, day="*/2")
+    start_time = datetime.now() + timedelta(minutes=1)
+    trigger = DateTrigger(run_date=start_time)
+    # trigger = CronTrigger(hour=1, minute=0)
     scheduler.add_job(fetcher.fetch_and_save_dogs,trigger=trigger, max_instances=1)
     scheduler.start()
     print("Scheduler started")
