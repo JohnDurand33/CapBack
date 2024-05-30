@@ -26,6 +26,7 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(256), nullable=False)
+    state = db.Column(db.String(10), default='', nullable=False)
     zip_code = db.Column(db.String(10), default='', nullable=False)
     user_created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     token = db.Column(db.String(256), default='', nullable=True)
@@ -57,7 +58,8 @@ class Dog(db.Model, UserMixin):
     breed = db.Column(db.String(255), default='', nullable=False)
     color = db.Column(db.String(100), default='', nullable=True)
     sex = db.Column(db.String(10), default='', nullable=True)
-    city_state = db.Column(db.String(100), default='', nullable=True)
+    city = db.Column(db.String(100), default='', nullable=True)
+    state = db.Column(db.String(10), default='', nullable=True)
     dog_zip_code = db.Column(db.String(10), default='', nullable=True)
 
 

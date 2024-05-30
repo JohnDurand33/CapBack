@@ -6,19 +6,17 @@ from flask_moment import Moment
 from flask_cors import CORS
 from .models import User, Dog, Org, fav_dog, db, ma
 from helpers import JSONEncoder
-from .scheduler import scheduler, start_scheduler
 from dotenv import load_dotenv
 from .api.__init__ import api
-from .auth.__init import auth
+from .auth.__init__ import auth
 import os
-
 
 def create_app():
     load_dotenv()
 
     app = Flask(__name__)
 
-    app.config.from_object(Config) 
+    app.config.from_object(Config)
 
     CORS(app, resources={r"/*": {
         "origins": "*",
@@ -38,9 +36,9 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        start_scheduler(app)  # Start the scheduler with the app context
+        from .auth.scheduler import start_scheduler
+        start_scheduler(app)
 
     return app
-
 
 app = create_app()

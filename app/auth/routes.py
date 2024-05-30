@@ -3,9 +3,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import db, fav_dog, Org, Dog, User, user_schema, users_schema, dog_schema, dogs_schema, org_schema, orgs_schema
 from datetime import datetime, timedelta, timezone
 from helpers import token_required
-from .__init import auth
+from .__init__ import auth
 import secrets
 from flask_cors import cross_origin
+from . import DogMatcher
 
 
 @auth.route('/signup', methods=['POST'])
@@ -13,16 +14,17 @@ def signup():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    state= data.get('state')
     zip_code = data.get('zip_code')
 
-    if not email or not password or not zip_code:
+    if not email or not password or not state or not zip_code:
         return jsonify({'message': 'Missing required fields'}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({'message': 'Email already in use'}), 400
 
     password_hash = generate_password_hash(password)
-    new_user = User(email=email, password=password_hash, zip_code=zip_code)
+    new_user = User(email=email, password=password_hash, state=state, zip_code=zip_code)
     db.session.add(new_user)
     user_schema.dump(new_user)
     db.session.commit()
@@ -70,11 +72,9 @@ def protected(user):
 
 
 @auth.route('/getbreeds', methods=['GET'])
-@cross_origin()  # Apply CORS to this route
 @token_required
 def get_fav_breeds(user):
     try:
-        print(f'Request Method: {request.method}')
         print(f'User: {user}')
         print(f'favBreeds: {user.fav_breeds}')
         return jsonify(user.fav_breeds), 200
@@ -91,4 +91,13 @@ def update_fav_breeds(user):
     print(f'user.fav_breeds: {user.fav_breeds}')
     db.session.commit()
     return jsonify({'message': 'Favorite breeds updated successfully'}), 200
+
+
+@auth.route('/matchdogs', methods=['POST'])
+@token_required
+def match_dogs(user):
+    dogs = Dog.query.filter(Dog.state == user.state).all()
+    dog_matcher = DogMatcher(db.session)
+    matched_dogs = dog_matcher.find_matching_dogs(user, dogs)
+    return jsonify(matched_dogs), 200
 
