@@ -6,7 +6,7 @@ from helpers import token_required
 from .__init__ import api
 from sqlalchemy.exc import SQLAlchemyError
 from flask_cors import cross_origin
-from ..auth.DogMatcher import DogMatcher
+from ..auth import DogMatcher
 
 
 @api.route('/getbreeds', methods=['GET'])

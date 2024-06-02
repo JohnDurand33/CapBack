@@ -30,7 +30,6 @@ class User(db.Model, UserMixin):
     zip_code = db.Column(db.String(10), default='', nullable=False)
     user_created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     token = db.Column(db.String(256), default='', nullable=True)
-    token_expiry = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(hours=1), nullable=True)
     fav_breeds = db.Column(JSON, default=[])
     dogs = db.relationship('Dog', secondary=fav_dog, backref='users', lazy=True)
 
@@ -39,8 +38,6 @@ class User(db.Model, UserMixin):
 def ensure_timezone_aware(mapper, connection, target):
     if target.user_created is not None and target.user_created.tzinfo is None:
         target.user_created = target.user_created.replace(tzinfo=timezone.utc)
-    if target.token_expiry is not None and target.token_expiry.tzinfo is None:
-        target.token_expiry = target.token_expiry.replace(tzinfo=timezone.utc)
 
 event.listen(User, 'before_insert', ensure_timezone_aware)
 event.listen(User, 'before_update', ensure_timezone_aware)

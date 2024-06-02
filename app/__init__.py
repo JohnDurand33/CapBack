@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, make_response
 from .api.config import Config
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
@@ -18,11 +18,9 @@ def create_app():
 
     app.config.from_object(Config)
 
-    CORS(app, resources={r"/*": {
-        "origins": "*",
-        "allow_headers": ["Content-Type", "Authorization"],
-        "methods": ["OPTIONS", "POST", "GET", "DELETE", "PUT"]
-    }})
+    print(f"SECRET_KEY: {app.config['SECRET_KEY']}")
+
+    CORS(app)
 
     app.register_blueprint(api, url_prefix='/api')
     app.register_blueprint(auth, url_prefix='/auth')
