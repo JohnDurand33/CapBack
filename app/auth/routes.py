@@ -52,10 +52,10 @@ def login():
         'exp': datetime.now(timezone.utc) + timedelta(hours=1)
     }, app.config['SECRET_KEY'], algorithm="HS256")
 
-    user_schema.dump(user)
+    user.token = token
     db.session.commit()
 
-    return jsonify({'token': token, 'zip_code': user.zip_code, 'state': user.state}), 200
+    return jsonify({'token': user.token, 'zip_code': user.zip_code, 'state': user.state}), 200
 
 
 @auth.route('/refresh', methods=['POST'])

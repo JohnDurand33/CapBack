@@ -37,13 +37,13 @@ def token_required(f):
             user = User.query.filter_by(id=user_id).first()
             if not user:
                 print('User not found')
-                return jsonify({'message': 'User not found!'}), 403
+                return jsonify({'message': 'User not found!'}), 401
         except jwt.ExpiredSignatureError:
             print('Token has expired')
             return jsonify({'message': 'Token has expired!'}), 401
         except jwt.InvalidTokenError:
             print('Token is invalid')
-            return jsonify({'message': 'Token is invalid!'}), 402
+            return jsonify({'message': 'Token is invalid!'}), 403
 
         return f(user, *args, **kwargs)
     return decorated

@@ -6,7 +6,7 @@ from helpers import token_required
 from .__init__ import api
 from sqlalchemy.exc import SQLAlchemyError
 from flask_cors import cross_origin
-from ..auth import DogMatcher
+from ..DogMatcher import DogMatcher
 
 
 @api.route('/getbreeds', methods=['GET'])
@@ -31,7 +31,7 @@ def update_fav_breeds(user):
     return jsonify({'message': 'Favorite breeds updated successfully'}), 200
 
 
-@api.route('/matchbreeds', methods=['POST'])
+@api.route('/find_dogs', methods=['POST'])
 @token_required
 def match_dogs(user):
     dogs = Dog.query.filter(Dog.state == user.state).all()
@@ -39,8 +39,22 @@ def match_dogs(user):
     matched_dogs = dog_matcher.find_matching_dogs(user, dogs)
     return jsonify(matched_dogs), 200
 
+@api.route('/get_favdogs', methods=["GET","POST"])
+@token_required
+def get_favorite_dogs(user):
+    try:
+        fav_dogs = db.session.query(Dog).join(fav_dog).filter_by(user_id=user.id).all()
+        print(dogs_schema.jsonify(fav_dogs))
+        return dogs_schema.jsonify(fav_dogs), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        print(f"Database error: {e}")
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "Error getting favorite dogs"}), 500
 
-@api.route('/favdogs', methods=['POST'])
+@api.route('/add_favdog', methods=['POST'])
 @token_required
 def add_favorite_dog(user):
     try:
@@ -69,7 +83,7 @@ def add_favorite_dog(user):
         return jsonify({"error": "Error adding favorite dog"}), 500
 
 
-@api.route('/favdogs/<int:dog_id>', methods=['DELETE'])
+@api.route('/rem_favdog/<int:dog_id>', methods=['DELETE'])
 @token_required
 def delete_favorite_dog(user, dog_id):
     try:
