@@ -49,7 +49,10 @@ def login():
 
     token = jwt.encode({
         'user_id': user.id,
-        'exp': datetime.now(timezone.utc) + timedelta(hours=1)
+        'exp': datetime.now(timezone.utc) + timedelta(hours=1),
+        'email' : user.email,
+        'state' : user.state,
+        'zip_code' : user.zip_code
     }, app.config['SECRET_KEY'], algorithm="HS256")
 
     user.token = token
@@ -80,7 +83,10 @@ def refresh_token():
         # Create a new token
         new_token = jwt.encode({
             'user_id': user.id,
-            'exp': datetime.now(timezone.utc) + timedelta(hours=1)
+            'exp': datetime.now(timezone.utc) + timedelta(hours=1),
+            'email': user.email,
+            'state': user.state,
+            'zip_code': user.zip_code
         }, app.config['SECRET_KEY'], algorithm="HS256")
         print(f'New Token: {new_token}')  # Log the new token
 
@@ -103,10 +109,5 @@ def logout(user):
 
     return jsonify({'message': 'Logged out successfully'}), 200
 
-
-@auth.route('/protected', methods=['GET'])
-@token_required
-def protected(user):
-    return jsonify({'message': 'You are logged in'}), 200
 
 
