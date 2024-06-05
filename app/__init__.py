@@ -34,7 +34,7 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        from .auth.scheduler import start_scheduler
+        from app.auth.scheduler import start_scheduler
         start_scheduler(app)
 
     return app

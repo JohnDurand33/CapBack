@@ -43,4 +43,8 @@ class DogMatcher:
             except Exception as e:
                 print(f"Error processing dog {dog.api_id}: {e}")
 
+        end_time = datetime.datetime.now()
+        duration = end_time - start_time
+        print(f"Duration: {duration}")
+
         return [dict(dog) for dog in matched_dogs]

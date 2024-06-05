@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 from helpers import token_required
 from .__init__ import api
 from sqlalchemy.exc import SQLAlchemyError
-from flask_cors import cross_origin
 from ..DogMatcher import DogMatcher
+import random
 
 
 @api.route('/getbreeds', methods=['GET'])
@@ -15,6 +15,7 @@ def get_fav_breeds(user):
     try:
         print(f'User: {user}')
         print(f'favBreeds: {user.fav_breeds}')
+
         return jsonify(user.fav_breeds), 200
     except Exception as e:
         print(f'Error: {e}')
@@ -30,6 +31,23 @@ def update_fav_breeds(user):
     db.session.commit()
     return jsonify({'message': 'Favorite breeds updated successfully'}), 200
 
+@api.route('/clearbreeds', methods=['DELETE'])
+@token_required
+def clear_fav_breeds(user):
+    user.fav_breeds = []
+    db.session.commit()
+    return jsonify({'message': 'Favorite breeds cleared successfully'}), 200
+
+
+@api.route('/randomize_dogs', methods=['POST'])
+@token_required
+def randomize_dogs(user):
+    dogs = Dog.query.filter(Dog.state == user.state).all()
+    dog_matcher = DogMatcher(db.session)
+    matched_dogs = dog_matcher.find_matching_dogs(user, dogs)
+    randomized_dogs = random.shuffle(matched_dogs)
+    return jsonify(randomized_dogs), 200
+
 
 @api.route('/find_dogs', methods=['POST'])
 @token_required
@@ -38,21 +56,6 @@ def match_dogs(user):
     dog_matcher = DogMatcher(db.session)
     matched_dogs = dog_matcher.find_matching_dogs(user, dogs)
     return jsonify(matched_dogs), 200
-
-@api.route('/get_favdogs', methods=["GET","POST"])
-@token_required
-def get_favorite_dogs(user):
-    try:
-        fav_dogs = db.session.query(Dog).join(fav_dog).filter_by(user_id=user.id).all()
-        print(dogs_schema.jsonify(fav_dogs))
-        return dogs_schema.jsonify(fav_dogs), 200
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        print(f"Database error: {e}")
-        return jsonify({"error": "Database error"}), 500
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"error": "Error getting favorite dogs"}), 500
 
 @api.route('/add_favdog', methods=['POST'])
 @token_required
@@ -105,3 +108,25 @@ def delete_favorite_dog(user, dog_id):
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"error": "Error deleting favorite dog"}), 500
+    
+@api.route('/clear_fav_dogs', methods=['DELETE'])
+@token_required
+def clear_fav_dogs(user):
+    try:
+        user_fav_entries = db.session.query(fav_dog).filter_by(user_id=user.id).all()
+        print(f"User fav entries: {user_fav_entries}")
+    
+        if user_fav_entries:
+            db.session.query(fav_dog).filter_by(user_id=user.id).delete()
+            db.session.commit()
+            return jsonify({"message": "All dogs removed from favorites"}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        print(f"Database error: {e}")
+        return jsonify({"error": "Database error"}), 500
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "Error deleting favorite dog"}), 500
+
+
+
