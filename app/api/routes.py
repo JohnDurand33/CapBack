@@ -31,6 +31,7 @@ def get_favorite_dogs(user):
     try:
         fav_dogs = db.session.query(Dog).join(
             fav_dog).filter_by(user_id=user.id).all()
+        print(f'fav_dogs: {fav_dogs}')
         return dogs_schema.jsonify(fav_dogs), 200
     except SQLAlchemyError as e:
         db.session.rollback()
