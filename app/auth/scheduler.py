@@ -200,9 +200,9 @@ class DogDataFetcher:
 
 def start_scheduler(app):
     fetcher = DogDataFetcher(app)
-    # start_time = datetime.now() + timedelta(minutes=1)
-    # trigger = DateTrigger(run_date=start_time)
-    trigger = CronTrigger(hour=1, minute=0, day='1/2')
+    start_time = datetime.now() + timedelta(minutes=1)
+    trigger = DateTrigger(run_date=start_time)
+    # trigger = CronTrigger(hour=1, minute=0, day='1/2')
     scheduler.add_job(fetcher.fetch_and_save_dogs,trigger=trigger, max_instances=1)
     scheduler.start()
     print("Scheduler started")
