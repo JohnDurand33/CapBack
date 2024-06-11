@@ -18,8 +18,6 @@ def create_app():
 
     app.config.from_object(Config)
 
-    print(f"SECRET_KEY: {app.config['SECRET_KEY']}")
-
     CORS(app)
 
     app.register_blueprint(api, url_prefix='/api')
