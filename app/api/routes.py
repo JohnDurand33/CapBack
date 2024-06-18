@@ -129,7 +129,7 @@ def delete_favorite_dog(user, api_id):
         print(f"Error: {e}")
         return jsonify({"error": "Error deleting favorite dog"}), 500
     
-@api.route('/clear_fav_dogs', methods=['DELETE'])
+@api.route('/clear_favdogs', methods=['DELETE'])
 @token_required
 def clear_fav_dogs(user):
     try:
