@@ -30,8 +30,7 @@ class DogDataFetcher:
         logger.info("DogDataFetcher initialized with API key.")
 
     def fetch_org_data_from_api(self, result_start, batch_size):
-        logger.info(f"Fetching organization data from API with start: {
-                    result_start} and batch size: {batch_size}")
+        logger.info(f"Fetching organization data from API with start: {result_start} and batch size: {batch_size}")
         payload = {
             "apikey": self.api_key,
             "objectType": "orgs",
@@ -54,16 +53,14 @@ class DogDataFetcher:
             response = requests.post(
                 url=url, headers=headers, data=json.dumps(payload))
             response.raise_for_status()
-            logger.info(f"Organization fetch complete. Response status code: {
-                        response.status_code}")
+            logger.info(f"Organization fetch complete. Response status code: {response.status_code}")
             return response.json().get('data', {})
         except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching organization data from API: {e}")
             return {}
 
     def fetch_dog_data_from_api(self, result_start, batch_size):
-        logger.info(f"Fetching dog data from API with start: {
-                    result_start} and batch size: {batch_size}")
+        logger.info(f"Fetching dog data from API with start: {result_start} and batch size: {batch_size}")
         payload = {
             "apikey": self.api_key,
             "objectType": "animals",
@@ -93,8 +90,7 @@ class DogDataFetcher:
             response = requests.post(
                 url=url, headers=headers, data=json.dumps(payload))
             response.raise_for_status()
-            logger.info(f"Dog fetch complete. Response status code: {
-                        response.status_code}")
+            logger.info(f"Dog fetch complete. Response status code: {response.status_code}")
             return response.json().get('data', {})
         except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching dog data from API: {e}")
@@ -125,8 +121,7 @@ class DogDataFetcher:
                     new_org_ids.add(api_id)
                     logger.info(f"Added new organization: {new_org}")
                 else:
-                    logger.info(f"Organization ID {
-                                api_id} already exists. Skipping addition.")
+                    logger.info(f"Organization ID {api_id} already exists. Skipping addition.")
 
             if new_org_ids:
                 try:
@@ -148,8 +143,7 @@ class DogDataFetcher:
                         if api_id in db_dogs:
                             db_dog = db_dogs[api_id]
                             if db_dog.status != "1":
-                                logger.info(f"Deleting dog with id {
-                                            db_dog.api_id} as its status changed.")
+                                logger.info(f"Deleting dog with id {db_dog.api_id} as its status changed.")
                                 db.session.delete(db_dog)
                         else:
                             existing_org = db.session.query(Org).filter_by(
@@ -175,8 +169,7 @@ class DogDataFetcher:
                                 logger.info(f"Added new dog: {new_dog}")
                             else:
                                 fetched_ids.remove(api_id)
-                                logger.warning(f"Skipping addition of dog with ID {
-                                               api_id} because corresponding org ID {dog_data.get('animalOrgID')} does not exist.")
+                                logger.warning(f"Skipping addition of dog with ID {api_id} because corresponding org ID {dog_data.get('animalOrgID')} does not exist.")
                     except Exception as e:
                         fetched_ids.remove(api_id)
                         logger.error(
@@ -196,8 +189,7 @@ class DogDataFetcher:
         current_ids = set(db_dogs.keys())
         ids_to_delete = current_ids - fetched_ids
         if ids_to_delete:
-            logger.info(f"Deleting {len(ids_to_delete)
-                                    } dogs that are no longer available")
+            logger.info(f"Deleting {len(ids_to_delete)} dogs that are no longer available")
             dogs_to_delete = Dog.query.filter(
                 Dog.api_id.in_(ids_to_delete)).all()
             if dogs_to_delete:
@@ -221,8 +213,7 @@ class DogDataFetcher:
             batch_size = 1000
 
             while True:
-                logger.info(f"Fetching organization batch starting from {
-                            result_start}")
+                logger.info(f"Fetching organization batch starting from {result_start}")
                 org_data = self.fetch_org_data_from_api(
                     result_start, batch_size)
                 if not org_data:
