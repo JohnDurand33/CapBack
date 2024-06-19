@@ -1,15 +1,14 @@
-from flask import Flask, request, make_response
+from flask import Flask
 from .api.config import Config
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
 from flask_moment import Moment
 from flask_cors import CORS
-from .models import User, Dog, Org, fav_dog, db, ma
+from .models import db, ma
 from helpers import JSONEncoder
 from dotenv import load_dotenv
 from .api.__init__ import api
 from .auth.__init__ import auth
-import os
 
 def create_app():
     load_dotenv()
@@ -26,13 +25,13 @@ def create_app():
     app.json_encoder = JSONEncoder
 
     db.init_app(app)
-    migrate = Migrate(app, db)
-    moment = Moment(app)
+    Migrate(app, db)
+    Moment(app)
     ma.init_app(app)
 
     with app.app_context():
         db.create_all()
-        from app.auth.scheduler import start_scheduler
+        from app.scheduler import start_scheduler
         start_scheduler(app)
 
     return app

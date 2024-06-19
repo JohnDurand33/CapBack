@@ -148,47 +148,30 @@ def clear_fav_dogs(user):
         print(f"Error: {e}")
         return jsonify({"error": "Error deleting favorite dog"}), 500
     
-@api.route('/get_org_details/<string:dog_id>', methods=['GET'])
+
+@api.route('/get_org_details', methods=['POST'])
 @token_required
-def get_org_details(user, dog_id):
-    try:
-        dog = Dog.query.filter_by(api_id=dog_id).first()
-        if not dog:
-            return jsonify({"error": "Dog not found"}), 404
+def get_org_details(user):
+    data = request.json
+    dog_id = data.get('dog_id')
 
-        org_id = dog.org_id
-        payload = {
-            "apikey": os.getenv('RESCUE_KEY'),
-            "objectType": "orgs",
-            "objectAction": "publicSearch",
-            "search": {
-                "resultLimit": 1,
-                "filters": [
-                    {"fieldName": "orgID", "operation": "equals", "criteria": org_id}
-                ],
-                "fields": ["orgID", "orgEmail"]
-            }
-        }
-        url = 'https://api.rescuegroups.org/http/v2.json'
-        headers = {'Content-Type': 'application/json'}
+    dog = Dog.query.filter_by(api_id=dog_id).first()
+    if not dog:
+        return jsonify({"error": "Dog not found"}), 404
 
-        response = requests.post(
-            url=url, headers=headers, data=json.dumps(payload))
-        response.raise_for_status()
+    org = Org.query.filter_by(api_id=dog.org_id).first()
+    if not org:
+        return jsonify({"error": "Organization not found"}), 404
 
-        org_data = response.json().get('data', {})
-        if not org_data:
-            return jsonify({"error": "Organization not found"}), 404
+    org_details = {
+        "name": org.name,
+        "city": org.city,
+        "state": org.state,
+        "email": org.email if org.email else None,
+        "adoption_url": org.adoption_url if org.adoption_url else None,
+        "website_url": org.website_url if org.website_url else None,
+        "fb_url": org.fb_url if org.fb_url else None,
+        "org_zip_code": org.org_zip_code
+    }
 
-        org_email = next(iter(org_data.values())).get('orgEmail')
-        if not org_email:
-            return jsonify({"error": "Organization email not found"}), 404
-
-        return jsonify({"orgEmail": org_email}), 200
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"message": "Internal Server Error"}), 500
-    
-
-
-
+    return jsonify({"organization": org_details}), 200
