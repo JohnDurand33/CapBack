@@ -249,7 +249,7 @@ class DogDataFetcher:
 def start_scheduler(app):
     fetcher = DogDataFetcher(app)
 
-    trigger = CronTrigger(day='*/3', hour=1)
+    trigger = CronTrigger(day='*/7', hour=1)
     # trigger = DateTrigger(run_date=datetime.now() + timedelta(minutes=1))
 
     scheduler.add_job(fetcher.fetch_and_save_data,trigger=trigger, max_instances=1)
