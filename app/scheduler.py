@@ -237,10 +237,12 @@ class DogDataFetcher:
                     logger.info("No more dog data to fetch.")
                     break
                 fetched_ids.update(dog_data.keys())
+                logger.info(f"Fetched IDs so far: {fetched_ids}")
                 self.update_dog_data(dog_data, db_dogs, fetched_ids)
                 result_start += batch_size
                 time.sleep(1)
 
+            logger.info(f"Current DB dog count: {len(db_dogs)}")
             self.delete_unavailable_dogs(db_dogs, fetched_ids)
             self.stop_scheduler()
             logger.info("Finished shutting down")
@@ -249,8 +251,8 @@ class DogDataFetcher:
 def start_scheduler(app):
     fetcher = DogDataFetcher(app)
 
-    trigger = CronTrigger(day='*/7', hour=1)
-    # trigger = DateTrigger(run_date=datetime.now() + timedelta(minutes=1))
+    # trigger = CronTrigger(day='*/7', hour=1)
+    trigger = DateTrigger(run_date=datetime.now() + timedelta(minutes=1))
 
     scheduler.add_job(fetcher.fetch_and_save_data,trigger=trigger, max_instances=1)
     scheduler.start()
