@@ -46,8 +46,7 @@ event.listen(User, 'before_update', ensure_timezone_aware)
 class Dog(db.Model, UserMixin):
     __tablename__ = 'dog'
     api_id = db.Column(db.String(50), primary_key=True)
-    org_id = db.Column(db.String(50), db.ForeignKey(
-        'org.api_id', ondelete='CASCADE'), nullable=False)
+    org_id = db.Column(db.String(50), db.ForeignKey('org.api_id', ondelete='CASCADE'), nullable=False)
     status = db.Column(db.String(100), default='', nullable=False)
     name = db.Column(db.String, default='', nullable=False)
     img_url = db.Column(db.String(200), default='', nullable=True)
