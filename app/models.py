@@ -14,24 +14,24 @@ db = SQLAlchemy()
 
 # Many-to-Many relationship table for User and Dog
 fav_dog = db.Table('fav_dog',
-                   db.Column('user_id', db.Integer, db.ForeignKey(
-                       'user.id'), primary_key=True),
-                   db.Column('dog_id', db.String(50), db.ForeignKey(
-                       'dog.api_id'), primary_key=True)
-                   )
+    db.Column('user_id', db.Integer, db.ForeignKey(
+        'user.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('dog_id', db.String(50), db.ForeignKey(
+        'dog.api_id', ondelete='CASCADE'), primary_key=True)
+    )
 
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(256), nullable=False)
     state = db.Column(db.String(10), default='', nullable=False)
     zip_code = db.Column(db.String(10), default='', nullable=False)
     user_created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     token = db.Column(db.String(256), default='', nullable=True)
     fav_breeds = db.Column(JSON, default=[])
-    dogs = db.relationship('Dog', secondary=fav_dog, backref='users', lazy=True)
+    dogs = db.relationship('Dog', secondary=fav_dog, backref='users', lazy='joined')
 
 
 #Makes the token check method much easier
@@ -47,7 +47,7 @@ class Dog(db.Model, UserMixin):
     __tablename__ = 'dog'
     api_id = db.Column(db.String(50), primary_key=True)
     org_id = db.Column(db.String(50), db.ForeignKey(
-        'org.api_id'), nullable=False)
+        'org.api_id', ondelete='CASCADE'), nullable=False)
     status = db.Column(db.String(100), default='', nullable=False)
     name = db.Column(db.String, default='', nullable=False)
     img_url = db.Column(db.String(200), default='', nullable=True)
