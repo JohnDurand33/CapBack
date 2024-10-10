@@ -149,8 +149,8 @@ class DogDataFetcher:
 
             try:
                 if new_orgs:
-                    with db.session.begin():
-                        db.session.add_all(new_orgs)
+                    db.session.add_all(new_orgs)
+                    db.session.commit()
                     logger.info(f"Added {len(new_orgs)} new organizations.")
             except IntegrityError as e:
                 db.session.rollback()
@@ -211,8 +211,8 @@ class DogDataFetcher:
 
             if new_dogs:
                 try:
-                    with db.session.begin():
-                        db.session.add_all(new_dogs)
+                    db.session.add_all(new_dogs)
+                    db.session.commit()
                     logger.info(f"Added {len(new_dogs)} new dogs.")
                 except IntegrityError as e:
                     db.session.rollback()
@@ -285,8 +285,8 @@ class DogDataFetcher:
 def start_scheduler(app):
     fetcher = DogDataFetcher(app)
 
-    # trigger = CronTrigger(day='*/7', hour=1)
-    trigger = DateTrigger(run_date=datetime.now() + timedelta(minutes=1))
+    trigger = CronTrigger(day='*/7', hour=1)
+    # trigger = DateTrigger(run_date=datetime.now() + timedelta(minutes=1))
 
     scheduler.add_job(fetcher.fetch_and_save_data,trigger=trigger, max_instances=1)
     scheduler.start()
